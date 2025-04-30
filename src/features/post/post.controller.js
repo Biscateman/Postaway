@@ -1,64 +1,95 @@
-import { PostModel } from "./post.model.js";
 import { ApplicationError } from "../../middlewares/error.middleware.js";
+import { UserRepository } from "../user/user.repository.js";
+import { PostRepository } from "./post.repository.js";
 
 export class PostController {
-
-    getPosts(req, res){
-        
-        const userID = req.userID
-        const posts = PostModel.get(userID)
-            
-        if(posts.length > 0){
-            res.status(200).send(posts)
-        }else{
-            throw new ApplicationError('Post not found',400)
-        }
+    constructor(){
+        this.postRepository = new PostRepository()
+        this.userRepository = new UserRepository()
     }
 
-    getPost(req, res){
-        const postID = req.params.id
-        const post = PostModel.getByID(postID)
+    async getAllPosts(req, res){
+        
+        
+        const posts = await this.postRepository.get()    
+        if(posts.length > 0){
+            res.status(200).send(posts)
+        }
+        else{
+            return res.status(404).send({success: false, message: 'No posts found'})
+        }
+        
+        
+    }
+
+    async getPost(req, res, next){
+        const postID = req.params.postId
+        const post = await this.postRepository.getByID(postID)
         if(!post){
-            throw new ApplicationError('Post not found',400)
+            next(new ApplicationError(404, 'Post not found'))
         }else{
             res.status(200).send(post)
         }
     }
 
-    createPost(req, res){
+    async createPost(req, res, next){
         const userID = req.userID
         if(!req.file){
-            console.log('no file uploaded')
+            return res.status(400).send({success: false, message: 'Image is required'})
         }
-        const caption = req.body.caption
-        const imageUrl = '/public/uploads' + req.file.filename
-        const result = PostModel.add(userID, caption, imageUrl)
-        res.status(201).send(result)
+        let postData = req.body
+        postData.imageUrl = '/public/uploads' + req.file.filename
+        postData  = {...postData, userID}
+        try{
+            const result = await this.postRepository.add(postData)
+            res.status(201).send(result)
+        }
+        catch(error){
+            next(new ApplicationError(400, error.message))
+        }
     }
 
-    deletePost(req, res){
-        const postID = req.params.id
-        const result = PostModel.delete(postID)
+    async getPostsByUserId(req, res, next){
+        const userID = req.params.userId
+
+        const user = await this.userRepository.findUserById(userID)
+        if(!user){
+            next(new ApplicationError(404, 'User not found'))
+        }else{
+            const posts = await this.postRepository.getByUserID(userID)
+            if(!posts){
+                next(new ApplicationError(404, 'Posts not found'))
+            }else{
+                res.status(200).send(posts)
+            }
+        }   
+    }
+
+    async deletePost(req, res, next){
+        const postID = req.params.postId
+        const result = await this.postRepository.delete(postID)
         if(!result){
-            throw new ApplicationError('Post not found',400)
+            next(new ApplicationError(400, 'Post not found'))
         }else{
             res.status(200).send('Post Deleted!')
         }
     }
 
-    updatePost(req, res){
-        const postID = req.params.id
-        const {caption} = req.body
-        let imageUrl =  ''
-        if (req.file){
-            imageUrl = '/public/uploads/' + req.file.filename
-        }
-        const result = PostModel.update(postID, caption, imageUrl)
+    async updatePost(req, res){
+        const postID = req.params.postId
 
-        if(!result){
-            throw new ApplicationError('Post not found',400)
-        }else{
-            res.status(200).send(result)
+        try{
+            const result = await this.postRepository.update(postID, {caption: req.body?req.body.caption:null, imageUrl:req.file?req.file.filename:null})
+
+            if(result.success === false){
+                return res.status(400).send(result.message)
+            }
+
+            return res.status(200).send(result.res)
+
+        }catch(error){
+            return res.status(error.code).send(error.message)
         }
+        
     }
 }

@@ -1,12 +1,15 @@
 import express from 'express'
 import { LikeController } from './like.controller.js'
-import checkPost from '../../middlewares/post.middleware.js'
 
 const router =  express.Router()
 
 const likeController = new LikeController()
 
-router.get('/:id', checkPost, likeController.getLikes)
-router.get('/toggle/:id', checkPost, likeController.toggleLike)
+router.get('/:id',  (req, res, next) => {   
+    likeController.getLikes(req, res, next)
+})
+router.post('/toggle/:id', (req, res, next) => {
+    likeController.toggleLike(req, res, next)
+})
 
 export default router
