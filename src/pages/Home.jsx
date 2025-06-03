@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Row, Col } from 'react-bootstrap';
 import Post from '../components/Post';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -28,14 +29,16 @@ function Home() {
   }, [user, navigate]);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Feed</h1>
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <Post key={post._id} post={post} />
-        ))}
-      </div>
-    </div>
+    <Row className="justify-content-center">
+      <Col md={8}>
+        <h1 className="mb-4">Feed</h1>
+        <div className="d-flex flex-column gap-4">
+          {posts.map((post) => (
+            <Post key={post._id} post={post} />
+          ))}
+        </div>
+      </Col>
+    </Row>
   );
 }
 
