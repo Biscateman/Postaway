@@ -1,6 +1,0 @@
-@import 'bootstrap/dist/css/bootstrap.min.css';
-
-.post-image {
-  max-height: 400px;
-  object-fit: cover;
-}
