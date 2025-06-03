@@ -48,7 +48,7 @@ function Post({ post }) {
         <div className="d-flex gap-3">
           <Button variant="link" onClick={toggleLike} className="p-0 text-dark">
             {liked ? (
-              <HeartSolidIcon className="text-danger" width={24} />
+              <HeartSolidIcon className="text-danger\" width={24} />
             ) : (
               <HeartIcon width={24} />
             )}
